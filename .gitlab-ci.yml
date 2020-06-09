@@ -15,10 +15,13 @@ build:
   script:
     - julia -e 'using InteractiveUtils;
                 versioninfo()'
-    - julia --color=yes --project=. -e 'using Pkg;
-                                        Pkg.instantiate();
-                                        using PumasTutorials;
-                                        PumasTutorials.weave_file("introduction","introduction.jmd")'
+    - >
+      julia --color=yes --project=. -e
+      'using Pkg;
+       Pkg.instantiate();
+       using PumasTutorials;
+       PumasTutorials.weave_file("introduction","introduction.jmd",
+       (:script,:html,:notebook))'
   only:
   - master
   - tags
