@@ -22,6 +22,10 @@ build:
        using PumasTutorials;
        PumasTutorials.weave_file("introduction","introduction.jmd",
        (:script,:html,:notebook))'
+  artifacts:
+    paths:
+      - html
+    expire_in: 1 week
   only:
   - master
   - tags
