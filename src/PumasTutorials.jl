@@ -76,6 +76,8 @@ function tutorial_footer(folder=nothing, file=nothing)
     end
     display("text/markdown", "Computer Information:")
     vinfo = sprint(InteractiveUtils.versioninfo)
+    # filter out the environment info since if might include sensitive information
+    vinfo = first(split(vinfo, "Environment:"))
     display("text/markdown",  """
     ```
     $(vinfo)
