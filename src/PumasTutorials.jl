@@ -63,7 +63,7 @@ function tutorial_footer(folder=nothing, file=nothing)
     display("text/markdown", """
     ## Appendix
 
-     These tutorials are part of the PumasTutorials.jl repository, found at: <https://github.com/JuliaDiffEq/DiffEqTutorials.jl>
+     These tutorials are part of the PumasTutorials.jl repository, found at: <https://github.com/PumasAI/PumasTutorials.jl>
     """)
     if folder !== nothing && file !== nothing
         display("text/markdown", """
@@ -76,6 +76,8 @@ function tutorial_footer(folder=nothing, file=nothing)
     end
     display("text/markdown", "Computer Information:")
     vinfo = sprint(InteractiveUtils.versioninfo)
+    # filter out the environment info since if might include sensitive information
+    vinfo = first(split(vinfo, "Environment:"))
     display("text/markdown",  """
     ```
     $(vinfo)
