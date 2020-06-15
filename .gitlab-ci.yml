@@ -20,7 +20,7 @@ build:
       'using Pkg;
        Pkg.instantiate();
        using PumasTutorials;
-       PumasTutorials.weave_file("introduction","introduction.jmd",
+       PumasTutorials.weave_file("pbpk","vorigsa.jmd",
        (:script,:html,:notebook))'
   artifacts:
     paths:
