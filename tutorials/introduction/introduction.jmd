@@ -120,10 +120,10 @@ output values using the following:
 
 ```{julia;eval=false}
 @derived begin
-    ev1    = Ev1
-    cp     = Cent / θ[3]
-    periph = Periph
-    resp   = Resp
+    ev1    = @. Ev1
+    cp     = @. Cent / θ[3]
+    periph = @. Periph
+    resp   = @. Resp
 end
 ```
 
@@ -169,10 +169,10 @@ model = @model begin
     end
 
     @derived begin
-        ev1    = Ev1
-        cp     = Cent / θ[3]
-        periph = Periph
-        resp   = Resp
+        ev1    = @. Ev1
+        cp     = @. Cent / θ[3]
+        periph = @. Periph
+        resp   = @. Resp
     end
 end
 ```
