@@ -1,0 +1,140 @@
+---
+title: Bayesian Estimation with Pumas
+author: Vaibhav Dixit
+---
+
+# Fitting a PK model
+In this tutorial we will go through the steps for bayesian parameter estimation of the Theophylline model in Pumas.jl.
+
+## The dosage regimen
+
+```julia
+using Pumas, StatsPlots, Random
+Random.seed!(0);
+```
+
+The dosage regimen is an dose of 100 into `Depot` at time 0, followed
+by two additional (`addl=2`) doses every fourth hour
+
+```julia
+repeated_dose_regimen = DosageRegimen(100, time=0, ii=4, addl=2)
+```
+
+As ususal, let's define a function to choose body weight and sex randomly
+per subject
+
+```julia
+choose_covariates() = (WT = rand(55:80),SEX=rand([0,1]))
+```
+
+and generate a population of subjects with a random weight and sex generated from the covariate function above
+
+```julia
+pop = Population(map(i -> Subject(id = i,
+                                  evs = repeated_dose_regimen,
+                                  obs=(dv=Float64[],),
+                                  cvs = choose_covariates()),
+                                  1:24))
+```
+We now have 24 subjects equipped with a weight and a dosage regimen.
+
+## The PK model of drug concentration and elimination
+To simulate a data set and attempt to estimate the data generating
+parameters, we have to set up the actual pharmacokinetics (PK) model
+and simulate the data. 
+
+```julia
+theopmodel_bayes = @model begin
+    @param begin
+      θ ~ Constrained(
+        MvNormal([1.9, 0.0781, 0.0463, 1.5, 0.4], Diagonal([9025, 15.25, 5.36, 5625, 400])),
+        lower=[0.1, 0.008,0.0004,0.1,0.0001],
+        upper=[5, 0.5, 0.09, 5, 1.5],
+        init =[1.9, 0.0781, 0.0463, 1.5, 0.4])
+      Ω ~ InverseWishart(2, fill(0.9, 1, 1) .* (2 + 1 + 1)) 
+      σ² ~ Gamma(1.0, 0.388)
+    end 
+
+    @random begin
+      η ~ MvNormal(Ω)
+    end 
+
+    @pre begin
+      Ka = (SEX == 1 ? θ[1] : θ[4]) + η[1]
+      K  = θ[2]
+      CL = θ[3]*(WT/70)^θ[5]
+      Vc = CL/K
+      SC = Vc/(WT/70)
+    end 
+
+    @covariates SEX WT  
+
+    @vars begin
+      conc := Central / SC
+    end 
+
+    @dynamics begin
+      Depot'   = -Ka*Depot
+      Central' =  Ka*Depot - K*Central
+    end 
+
+    @derived begin
+      dv ~ @. Normal(conc, sqrt(σ²))
+    end
+end
+```
+
+## Simulating observations
+
+Let's now simulate the model and generate our dataset, also not the parameter values that we 
+use for this model `param`. We will try to recover these values by fitting the model 
+specified with differential equations and informative priors over the parameters.
+
+```julia
+param = init_param(theopmodel_bayes)
+obs = simobs(theopmodel_bayes, pop, param, obstimes=1:1:72)
+plot(obs)
+```
+
+Create the dataset for fitting
+
+```julia
+data = Subject.(obs)
+```
+
+## Fitting a model
+To fit the model, we use the `fit` function. It requires a model, a population,
+a named tuple of parameters and a likelihood approximation method, since we want to 
+use Bayesian estimation with Markov Chain Monte Carlo we specify the `BayesMCMC`
+instead of an approximation method.
+
+```julia
+param = init_param(theopmodel_bayes)
+result = fit(theopmodel_bayes, data, param, Pumas.BayesMCMC(), nsamples = 1000)
+Pumas.param_mean(result)
+```
+
+Here we started the fitting at the true parameters, so let us define
+our own starting parameters, and fit based on those values.
+
+```julia
+alternative_param = (
+    θ = [0.5, 0.01, 0.0009, 4.0, 1.0],
+    Ω  = fill(10.0,1,1),
+    σ² = 0.04)
+
+result = fit(theopmodel_bayes, read_pumas(DataFrame(obs); cvs=[:WT, :SEX]), alternative_param, Pumas.BayesMCMC(), nsamples = 5000)
+Pumas.param_mean(result)
+```
+and we see that the estimates are essentially the same up to numerical noise.
+
+For post processing of the MCMC `fit` output it is converted to a `Chains` object from [MCMCChains.jl](https://github.com/TuringLang/MCMCChains.jl) which 
+provides with out of the box diagnostics and plotting functionality for MCMC chains.
+
+```julia
+chains = Pumas.Chains(result)
+plot(chains)
+```
+
+### Conclusion
+This tutorial showed how to use bayesian estimation in Pumas.jl, based on a simulated data set.  
