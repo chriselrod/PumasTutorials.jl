@@ -721,7 +721,8 @@ Population
 <h2>The PK model of drug concentration and elimination</h2>
 <p>To simulate a data set and attempt to estimate the data generating parameters, we have to set up the actual pharmacokinetics &#40;PK&#41; model and simulate the data. </p>
 
-
+<p>The prior for a parameter of the model can be any distribution from the <a href = https://juliastats.org/Distributions.jl/stable/>Distributions.jl</a>  
+  package and is specified with the tilde (<code>~</code>) symbol.</p>
 <pre class='hljl'>
 <span class='hljl-n'>theopmodel_bayes</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-nd'>@model</span><span class='hljl-t'> </span><span class='hljl-k'>begin</span><span class='hljl-t'>
     </span><span class='hljl-nd'>@param</span><span class='hljl-t'> </span><span class='hljl-k'>begin</span><span class='hljl-t'>

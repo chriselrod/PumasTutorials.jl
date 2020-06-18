@@ -43,6 +43,9 @@ To simulate a data set and attempt to estimate the data generating
 parameters, we have to set up the actual pharmacokinetics (PK) model
 and simulate the data. 
 
+The prior for a parameter of the model can be any distribution from the [Distributions.jl](https://juliastats.org/Distributions.jl/stable/) 
+package and is specified with the tilde (`~`) symbol.
+
 ```julia
 theopmodel_bayes = @model begin
     @param begin
