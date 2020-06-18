@@ -9,7 +9,7 @@ In this tutorial we will go through the steps for bayesian parameter estimation 
 ## The dosage regimen
 
 ```julia
-using Pumas, StatsPlots, Random
+using Pumas, StatsPlots, Random, MCMCChains
 Random.seed!(0);
 ```
 
@@ -73,10 +73,7 @@ theopmodel_bayes = @model begin
       conc := Central / SC
     end 
 
-    @dynamics begin
-      Depot'   = -Ka*Depot
-      Central' =  Ka*Depot - K*Central
-    end 
+    @dynamics Depots1Central1
 
     @derived begin
       dv ~ @. Normal(conc, sqrt(σ²))
@@ -126,7 +123,7 @@ alternative_param = (
 result = fit(theopmodel_bayes, read_pumas(DataFrame(obs); cvs=[:WT, :SEX]), alternative_param, Pumas.BayesMCMC(), nsamples = 5000)
 Pumas.param_mean(result)
 ```
-and we see that the estimates are essentially the same up to numerical noise.
+we see that the most of the parameter estimates are essentially the same up to numerical noise.
 
 For post processing of the MCMC `fit` output it is converted to a `Chains` object from [MCMCChains.jl](https://github.com/TuringLang/MCMCChains.jl) which 
 provides with out of the box diagnostics and plotting functionality for MCMC chains.
@@ -135,6 +132,16 @@ provides with out of the box diagnostics and plotting functionality for MCMC cha
 chains = Pumas.Chains(result)
 plot(chains)
 ```
+looking at the convergence plots it is easy to identify that Ω₁,₁, θ₁ and θ₄ parameters' chains have not converged and hence we get poor estimates for them.
 
+To evaluate convergence, diagnostics such as Raftery and Lewis diagnostic or graphical methods such as Autocorrelation plots can also be utilized in a straightforward manner.
+
+```julia
+rafterydiag(chains)
+```
+
+```julia
+autocorplot(chains)
+```
 ### Conclusion
-This tutorial showed how to use bayesian estimation in Pumas.jl, based on a simulated data set.  
+This tutorial showed how to use bayesian estimation in Pumas.jl, based on a simulated data set and conduct post processing on the results.
